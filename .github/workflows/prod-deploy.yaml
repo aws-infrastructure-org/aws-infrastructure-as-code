@@ -25,7 +25,7 @@ jobs:
           role-session-name: GitHubActions
           audience: sts.amazonaws.com
 
-      - name: Deploy to Dev
+      - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
         run: |
           aws s3 ls
