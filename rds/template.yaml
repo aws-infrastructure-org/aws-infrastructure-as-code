@@ -96,7 +96,6 @@ Resources:
       EngineVersion: 16.6
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-      DBClusterParameterGroupName: default.aurora-postgresql13
       BackupRetentionPeriod: !FindInMap [EnvironmentConfig, !Ref Environment, backupRetention]
       VpcSecurityGroupIds:
         - !GetAtt RDSSecurityGroup.GroupId
