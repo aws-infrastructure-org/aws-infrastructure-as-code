@@ -60,6 +60,7 @@ Resources:
                   - "lambda:*"
                   - "cloudwatch:*"
                   - "cloudformation:*"
+                  - "iam:*"
                   - "ec2:*"
                 Resource: "*"
 
