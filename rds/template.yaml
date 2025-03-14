@@ -33,6 +33,10 @@ Parameters:
     MinLength: '8'
     MaxLength: '41'
 
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of Subnet IDs for the DB Subnet Group
+
 Conditions:
   IsProd: !Equals [!Ref Environment, 'prod']
   IsQA: !Equals [!Ref Environment, 'qa']
@@ -72,6 +76,15 @@ Resources:
             - IsProd
             - '10.0.0.0/8'  # Restricted IP range for prod
             - '0.0.0.0/0'   # More permissive for non-prod
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub 'Subnet group for RDS - ${Environment}'
+      SubnetIds: !Ref SubnetIds
       Tags:
         - Key: Environment
           Value: !Ref Environment
