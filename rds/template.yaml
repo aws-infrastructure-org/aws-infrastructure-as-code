@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template for PostgreSQL RDS Instance across environments'
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Environment type
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+    Default: dev
+
+  DBName:
+    Type: String
+    Description: Database name
+    Default: mydb
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+
+  DBUsername:
+    Type: String
+    Description: Database admin username
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+
+  DBPassword:
+    Type: String
+    Description: Database admin password
+    NoEcho: true
+    MinLength: '8'
+    MaxLength: '41'
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, 'prod']
+  IsQA: !Equals [!Ref Environment, 'qa']
+  IsDev: !Equals [!Ref Environment, 'dev']
+
+Mappings:
+  EnvironmentConfig:
+    dev:
+      instanceClass: db.t3.micro
+      multiAZ: false
+      storageSize: 20
+      maxStorageSize: 100
+      backupRetention: 7
+    qa:
+      instanceClass: db.t3.small
+      multiAZ: false
+      storageSize: 50
+      maxStorageSize: 200
+      backupRetention: 14
+    prod:
+      instanceClass: db.t3.medium
+      multiAZ: true
+      storageSize: 100
+      maxStorageSize: 500
+      backupRetention: 35
+
+Resources:
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub 'Allow database access - ${Environment}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: !If 
+            - IsProd
+            - '10.0.0.0/8'  # Restricted IP range for prod
+            - '0.0.0.0/0'   # More permissive for non-prod
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  PostgresRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Sub '${DBName}_${Environment}'
+      Engine: postgres
+      EngineVersion: 14.7
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBInstanceClass: !FindInMap [EnvironmentConfig, !Ref Environment, instanceClass]
+      AllocatedStorage: !FindInMap [EnvironmentConfig, !Ref Environment, storageSize]
+      MaxAllocatedStorage: !FindInMap [EnvironmentConfig, !Ref Environment, maxStorageSize]
+      StorageType: gp2
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      PubliclyAccessible: !If [IsProd, false, true]
+      BackupRetentionPeriod: !FindInMap [EnvironmentConfig, !Ref Environment, backupRetention]
+      MultiAZ: !FindInMap [EnvironmentConfig, !Ref Environment, multiAZ]
+      DeletionProtection: !If [IsProd, true, false]
+      StorageEncrypted: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: MyApp
+
+Outputs:
+  RDSEndpoint:
+    Description: RDS instance endpoint
+    Value: !GetAtt PostgresRDSInstance.Endpoint.Address
+
+  RDSPort:
+    Description: RDS instance port
+    Value: !GetAtt PostgresRDSInstance.Endpoint.Port
+
+  DBName:
+    Description: Database name
+    Value: !Sub '${DBName}_${Environment}'
+
+  Environment:
+    Description: Deployment Environment
+    Value: !Ref Environment

@@ -1,0 +1,51 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+      - qa
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Dev)
+        if: github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_DEV }}
+          aws-region: us-east-1
+
+      - name: Deploy to Dev
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws s3 cp ./app s3://my-dev-bucket/ --recursive
+
+      - name: Configure AWS Credentials (QA)
+        if: github.ref == 'refs/heads/qa'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_QA }}
+          aws-region: us-east-1
+
+      - name: Deploy to QA
+        if: github.ref == 'refs/heads/qa'
+        run: |
+          aws s3 cp ./app s3://my-qa-bucket/ --recursive
+
+      - name: Configure AWS Credentials (Prod)
+        if: github.ref == 'refs/heads/prod'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_PROD }}
+          aws-region: us-east-1
+
+      - name: Deploy to Prod
+        if: github.ref == 'refs/heads/prod'
+        run: |
+          aws s3 cp ./app s3://my-prod-bucket/ --recursive

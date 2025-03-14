@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create OIDC Provider and IAM Roles for GitHub Actions Deployment
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Default: "gogulamudigeethareddy"
+    Description: "GitHub organization or username"
+  
+  RepositoryName:
+    Type: String
+    Default: "aws-infrastructure-as-code"
+    Description: "GitHub repository name"
+
+  Environment:
+    Type: String
+    AllowedValues:
+      - "dev"
+      - "qa"
+      - "prod"
+    Description: "Environment to deploy (dev, qa, prod)"
+  
+Resources:
+  ### OIDC Provider ###
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: "https://token.actions.githubusercontent.com"
+      ClientIdList:
+        - "sts.amazonaws.com"
+      ThumbprintList:
+        - "6938fd4d98bab03faadb97b34396831e3780aea1"  # GitHub's thumbprint
+
+  ### IAM Role for GitHub Actions ###
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "GitHubActionsRole-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main"
+
+      Policies:
+        - PolicyName: !Sub "GitHubActionsPolicy-${Environment}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                  - "lambda:*"
+                  - "cloudwatch:*"
+                Resource: "*"
+
+Outputs:
+  RoleArn:
+    Value: !GetAtt GitHubActionsRole.Arn
+    Description: "The ARN of the GitHub Actions role"
