@@ -1,0 +1,114 @@
+name: Deploy OIDC Provider to DEV/QA/PROD
+
+on:
+  push:
+    paths:
+      - 'oidc-provider/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate CloudFormation Template
+        run: |
+          aws cloudformation validate-template --template-body file://oidc-provider/cloudformation-oidc.yaml
+
+  deploy-dev:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Dev)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_DEV }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Deploy OIDC Provider CloudFormation Stack to Dev
+        run: |
+          STACK_NAME="github-aws-integration-ci-cd"
+
+          echo "Deploying to dev environment..."
+          
+          aws cloudformation deploy \
+            --template-file oidc-provider/cloudformation-oidc.yaml \
+            --stack-name ${STACK_NAME} \
+            --parameter-overrides \
+              GitHubOrg=gogulamudigeethareddy \
+              RepositoryName=aws-infrastructure-as-code \
+              Environment=dev \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+  deploy-qa:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (QA)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_QA }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Deploy OIDC Provider CloudFormation Stack to QA
+        run: |
+          STACK_NAME="github-aws-integration-ci-cd"
+          
+          echo "Deploying to qa environment..."
+          
+          aws cloudformation deploy \
+            --template-file oidc-provider/cloudformation-oidc.yaml \
+            --stack-name ${STACK_NAME} \
+            --parameter-overrides \
+              GitHubOrg=gogulamudigeethareddy \
+              RepositoryName=aws-infrastructure-as-code \
+              Environment=qa \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+  deploy-prod:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Prod)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_PROD }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Deploy OIDC Provider CloudFormation Stack to Prod
+        run: |
+          STACK_NAME="github-aws-integration-ci-cd"
+          
+          echo "Deploying to prod environment..."
+          
+          aws cloudformation deploy \
+            --template-file oidc-provider/cloudformation-oidc.yaml \
+            --stack-name ${STACK_NAME} \
+            --parameter-overrides \
+              GitHubOrg=gogulamudigeethareddy \
+              RepositoryName=aws-infrastructure-as-code \
+              Environment=prod \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
