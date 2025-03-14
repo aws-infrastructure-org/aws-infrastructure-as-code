@@ -18,7 +18,8 @@ jobs:
 
       - name: Validate CloudFormation Template
         run: |
-          aws cloudformation validate-template --template-body file://oidc-provider/cloudformation-oidc.yaml
+          aws cloudformation validate-template --template-body file://oidc-provider/cloudformation-oidc.yaml --region us-east-1
+          echo "CloudFormation template is valid."
 
   deploy-dev:
     needs: validate
