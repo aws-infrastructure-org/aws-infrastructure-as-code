@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Deploy to DEV/QA AWS
 
 on:
   push:
