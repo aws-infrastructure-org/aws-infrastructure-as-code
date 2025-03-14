@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - main
-      - qa
-      - prod
-
+      - develop
 # Add this permissions block
 permissions:
   id-token: write
@@ -19,6 +17,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+#DEV deployment
       - name: Configure AWS Credentials (Dev)
         if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
@@ -33,4 +32,17 @@ jobs:
         run: |
           aws s3 ls
 
-      # Rest of your workflow stays the same
+#QA deployment
+      - name: Configure AWS Credentials (QA)
+        if: github.ref == 'refs/heads/develop'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_QA }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Deploy to QA
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          aws s3 ls
