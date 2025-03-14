@@ -20,6 +20,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_DEV }}
           aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
 
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/main'
@@ -32,6 +34,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_QA }}
           aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
 
       - name: Deploy to QA
         if: github.ref == 'refs/heads/qa'
@@ -44,6 +48,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_PROD }}
           aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
 
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/prod'
