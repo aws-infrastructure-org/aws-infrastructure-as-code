@@ -26,7 +26,7 @@ jobs:
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/main'
         run: |
-          aws s3 cp ./app s3://my-dev-bucket/ --recursive
+          aws s3 ls
 
       - name: Configure AWS Credentials (QA)
         if: github.ref == 'refs/heads/qa'
@@ -40,7 +40,7 @@ jobs:
       - name: Deploy to QA
         if: github.ref == 'refs/heads/qa'
         run: |
-          aws s3 cp ./app s3://my-qa-bucket/ --recursive
+          aws s3 ls
 
       - name: Configure AWS Credentials (Prod)
         if: github.ref == 'refs/heads/prod'
@@ -54,4 +54,4 @@ jobs:
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/prod'
         run: |
-          aws s3 cp ./app s3://my-prod-bucket/ --recursive
+          aws s3 ls
