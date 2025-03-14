@@ -81,7 +81,7 @@ Resources:
     Properties:
       DBName: !Sub '${DBName}_${Environment}'
       Engine: postgres
-      EngineVersion: 14.7
+      EngineVersion: 14.5
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
       DBInstanceClass: !FindInMap [EnvironmentConfig, !Ref Environment, instanceClass]
@@ -117,5 +117,4 @@ Outputs:
   Environment:
     Description: Deployment Environment
     Value: !Ref Environment
-  
-  
+
