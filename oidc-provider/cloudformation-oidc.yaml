@@ -59,6 +59,8 @@ Resources:
                   - "s3:*"
                   - "lambda:*"
                   - "cloudwatch:*"
+                  - "cloudformation:*"
+                  - "ec2:*"
                 Resource: "*"
 
 Outputs:
