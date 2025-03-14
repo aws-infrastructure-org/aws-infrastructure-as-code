@@ -93,7 +93,7 @@ Resources:
     Type: AWS::RDS::DBCluster
     Properties:
       Engine: aurora-postgresql
-      EngineVersion: 13.6
+      EngineVersion: 16.6
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
       DBClusterParameterGroupName: default.aurora-postgresql13
