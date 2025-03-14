@@ -65,4 +65,3 @@ Outputs:
   RoleArn:
     Value: !GetAtt GitHubActionsRole.Arn
     Description: "The ARN of the GitHub Actions role"
-
