@@ -62,6 +62,7 @@ Resources:
                   - "cloudformation:*"
                   - "iam:*"
                   - "ec2:*"
+                  - "rds:*"
                 Resource: "*"
 
 Outputs:
