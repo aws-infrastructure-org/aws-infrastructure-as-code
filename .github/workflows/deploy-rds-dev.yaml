@@ -26,6 +26,19 @@ jobs:
           role-session-name: GitHubActions
           audience: sts.amazonaws.com
 
+      - name: Check and Delete Stack if in Rollback State
+        run: |
+          STACK_NAME="rds-dev-stack"
+          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query "Stacks[0].StackStatus" --output text || echo "STACK_NOT_FOUND")
+
+          if [[ "${STACK_STATUS}" == "ROLLBACK_FAILED" || "${STACK_STATUS}" == "ROLLBACK_COMPLETE" ]]; then
+            echo "Stack is in ${STACK_STATUS} state. Deleting stack..."
+            aws cloudformation delete-stack --stack-name ${STACK_NAME}
+            aws cloudformation wait stack-delete-complete --stack-name ${STACK_NAME}
+          else
+            echo "Stack is in ${STACK_STATUS} state. No need to delete."
+          fi
+
       - name: Deploy RDS CloudFormation Stack to Dev
         run: |
           STACK_NAME="rds-dev-stack"
