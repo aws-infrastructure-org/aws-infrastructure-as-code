@@ -3,7 +3,6 @@ name: Deploy to DEV/QA AWS
 on:
   push:
     branches:
-      - main
       - develop
 # Add this permissions block
 permissions:

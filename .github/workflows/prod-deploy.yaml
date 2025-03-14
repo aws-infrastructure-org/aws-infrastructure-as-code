@@ -3,7 +3,7 @@ name: Deploy to PROD AWS
 on:
   push:
     branches:
-      - prod
+      - main
 # Add this permissions block
 permissions:
   id-token: write
