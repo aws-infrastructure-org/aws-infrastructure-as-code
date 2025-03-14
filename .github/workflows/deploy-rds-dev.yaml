@@ -1,0 +1,45 @@
+name: Deploy RDS to DEV AWS
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'rds/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Dev)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_DEV }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Deploy RDS CloudFormation Stack to Dev
+        run: |
+          STACK_NAME="rds-dev-stack"
+
+          echo "Deploying RDS to dev environment..."
+          
+          aws cloudformation deploy \
+            --template-file rds/template.yaml \
+            --stack-name ${STACK_NAME} \
+            --parameter-overrides \
+              Environment=dev \
+              DBName=mydb \
+              DBUsername=${{ secrets.RDS_USER_NAME }} \
+              DBPassword=${{ secrets.RDS_PASSWORD }} \
+            --capabilities CAPABILITY_IAM \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
