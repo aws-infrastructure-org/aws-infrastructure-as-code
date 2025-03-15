@@ -4,7 +4,7 @@ Description: Create OIDC Provider and IAM Roles for GitHub Actions Deployment
 Parameters:
   GitHubOrg:
     Type: String
-    Default: "gogulamudigeethareddy"
+    Default: "aws-infrastructure-org"
     Description: "GitHub organization or username"
   
   RepositoryName:
@@ -46,8 +46,7 @@ Resources:
             Condition:
               StringLike:
                 "token.actions.githubusercontent.com:sub":
-                  - !Sub "repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/develop"
-                  - !Sub "repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main"
+                  - !Sub "repo:${GitHubOrg}/*:ref:refs/heads/*"
 
       Policies:
         - PolicyName: !Sub "GitHubActionsPolicy-${Environment}"
