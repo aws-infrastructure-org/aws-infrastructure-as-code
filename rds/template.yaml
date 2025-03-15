@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'AWS CloudFormation Template for PostgreSQL RDS Instance across environments'
+Description: 'AWS CloudFormation Template for Aurora PostgreSQL RDS Cluster across environments'
 
 Parameters:
   Environment:
@@ -33,6 +33,10 @@ Parameters:
     MinLength: '8'
     MaxLength: '41'
 
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of Subnet IDs for the DB Subnet Group
+
 Conditions:
   IsProd: !Equals [!Ref Environment, 'prod']
   IsQA: !Equals [!Ref Environment, 'qa']
@@ -41,19 +45,19 @@ Conditions:
 Mappings:
   EnvironmentConfig:
     dev:
-      instanceClass: db.t3.micro
+      instanceClass: db.t3.medium
       multiAZ: false
       storageSize: 20
       maxStorageSize: 100
       backupRetention: 7
     qa:
-      instanceClass: db.t3.small
+      instanceClass: db.t3.medium
       multiAZ: false
       storageSize: 50
       maxStorageSize: 200
       backupRetention: 14
     prod:
-      instanceClass: db.t3.medium
+      instanceClass: db.r5.large
       multiAZ: true
       storageSize: 100
       maxStorageSize: 500
@@ -76,23 +80,26 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  PostgresRDSInstance:
-    Type: AWS::RDS::DBInstance
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBName: !Sub '${DBName}_${Environment}'
-      Engine: postgres
-      EngineVersion: 14.7
+      DBSubnetGroupDescription: !Sub 'Subnet group for RDS - ${Environment}'
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuroraDBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: 16.6
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-      DBInstanceClass: !FindInMap [EnvironmentConfig, !Ref Environment, instanceClass]
-      AllocatedStorage: !FindInMap [EnvironmentConfig, !Ref Environment, storageSize]
-      MaxAllocatedStorage: !FindInMap [EnvironmentConfig, !Ref Environment, maxStorageSize]
-      StorageType: gp2
-      VPCSecurityGroups:
-        - !GetAtt RDSSecurityGroup.GroupId
-      PubliclyAccessible: !If [IsProd, false, true]
       BackupRetentionPeriod: !FindInMap [EnvironmentConfig, !Ref Environment, backupRetention]
-      MultiAZ: !FindInMap [EnvironmentConfig, !Ref Environment, multiAZ]
+      VpcSecurityGroupIds:
+        - !GetAtt RDSSecurityGroup.GroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
       DeletionProtection: !If [IsProd, true, false]
       StorageEncrypted: true
       Tags:
@@ -104,11 +111,11 @@ Resources:
 Outputs:
   RDSEndpoint:
     Description: RDS instance endpoint
-    Value: !GetAtt PostgresRDSInstance.Endpoint.Address
+    Value: !GetAtt AuroraDBCluster.Endpoint.Address
 
   RDSPort:
     Description: RDS instance port
-    Value: !GetAtt PostgresRDSInstance.Endpoint.Port
+    Value: !GetAtt AuroraDBCluster.Endpoint.Port
 
   DBName:
     Description: Database name
